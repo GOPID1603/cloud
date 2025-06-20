@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: energy-forecast-jukebox
+    env: static
+    staticPublishPath: .
+    buildCommand: ""

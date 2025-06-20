@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Forecast Jukebox</title>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --dark-color: #292f36;
+            --light-color: #f7fff7;
+            --accent-color: #ffd166;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at center, #3a3f4b 0%, #292f36 100%);
+        }
+        
+        .jukebox {
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(145deg, #2e3440, #262b35);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            border: 8px solid #3a3f4b;
+        }
+        
+        .jukebox::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(90deg, 
+                var(--primary-color), 
+                var(--secondary-color), 
+                var(--accent-color));
+        }
+        
+        .title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .display {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            height: 300px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #3a3f4b;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .time-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        select, button {
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            border: 2px solid var(--secondary-color);
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px;
+            padding-right: 35px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .detail-card {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #3a3f4b;
+        }
+        
+        .detail-card h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        
+        .detail-card p {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0 0;
+            color: var(--accent-color);
+        }
+        
+        .vinyl {
+            position: absolute;
+            right: -50px;
+            bottom: -50px;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(0deg, #111 50%, #333 50%);
+            border-radius: 50%;
+            border: 5px solid #222;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            animation: spin 10s linear infinite;
+            opacity: 0.2;
+            z-index: 0;
+        }
+        
+        .vinyl::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            border: 3px solid #111;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .led {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="jukebox">
+        <div class="led"></div>
+        <div class="vinyl"></div>
+        
+        <h1 class="title">Energy Forecast Jukebox</h1>
+        
+        <div class="display">
+            <div class="chart-container">
+                <canvas id="forecastChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="time-selector">
+                <select id="timeRange">
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d" selected>Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+                
+                <div id="customRange" style="display: none;">
+                    <input type="date" id="startDate">
+                    <span>to</span>
+                    <input type="date" id="endDate">
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button id="refreshBtn">Refresh Data</button>
+                <button id="forecastBtn">Run Forecast</button>
+            </div>
+        </div>
+        
+        <div class="details">
+            <div class="detail-card">
+                <h3>Current Usage</h3>
+                <p id="currentUsage">-- kW</p>
+            </div>
+            <div class="detail-card">
+                <h3>Predicted Peak</h3>
+                <p id="predictedPeak">-- kW</p>
+            </div>
+            <div class="detail-card">
+                <h3>Cost Estimate</h3>
+                <p id="costEstimate">-- $</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize chart
+        const ctx = document.getElementById('forecastChart').getContext('2d');
+        let forecastChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Actual Consumption',
+                        data: [],
+                        borderColor: '#4ecdc4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Forecasted Consumption',
+                        data: [],
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#f7fff7',
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffd166',
+                        bodyColor: '#f7fff7',
+                        borderColor: '#4ecdc4',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#f7fff7'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#f7fff7'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Energy (kW)',
+                            color: '#f7fff7'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Sample data - in a real app this would come from your API
+        function generateSampleData(range) {
+            const now = new Date();
+            let labels = [];
+            let actualData = [];
+            let forecastData = [];
+            let pointCount = 24;
+            
+            if (range === '7d') pointCount = 7;
+            if (range === '30d') pointCount = 30;
+            
+            for (let i = 0; i < pointCount; i++) {
+                let date;
+                if (range === '24h') {
+                    date = new Date(now.getTime() - (pointCount - i - 1) * 3600000);
+                    labels.push(date.toLocaleTimeString([], {hour: '2-digit'}));
+                } else {
+                    date = new Date(now.getTime() - (pointCount - i - 1) * 86400000);
+                    labels.push(date.toLocaleDateString([], {month: 'short', day: 'numeric'}));
+                }
+                
+                // Generate somewhat realistic energy usage patterns
+                const base = range === '24h' ? 
+                    (date.getHours() > 6 && date.getHours() < 18 ? 40 : 20) :
+                    (i % 7 === 0 || i % 7 === 6 ? 30 : 50); // weekends lower
+                
+                const actual = base + Math.random() * 30;
+                const forecast = actual + (Math.random() * 10 - 5);
+                
+                actualData.push(actual.toFixed(1));
+                forecastData.push(forecast.toFixed(1));
+            }
+            
+            return { labels, actualData, forecastData };
+        }
+
+        // Update chart with new data
+        function updateChart(range) {
+            const { labels, actualData, forecastData } = generateSampleData(range);
+            
+            forecastChart.data.labels = labels;
+            forecastChart.data.datasets[0].data = actualData;
+            forecastChart.data.datasets[1].data = forecastData;
+            forecastChart.update();
+            
+            // Update summary cards
+            const currentUsage = actualData[actualData.length - 1];
+            const predictedPeak = Math.max(...forecastData).toFixed(1);
+            const costEstimate = (predictedPeak * 0.15 * 24).toFixed(2);
+            
+            document.getElementById('currentUsage').textContent = `${currentUsage} kW`;
+            document.getElementById('predictedPeak').textContent = `${predictedPeak} kW`;
+            document.getElementById('costEstimate').textContent = `$${costEstimate}`;
+        }
+
+        // Event listeners
+        document.getElementById('timeRange').addEventListener('change', function() {
+            const range = this.value;
+            if (range === 'custom') {
+                document.getElementById('customRange').style.display = 'flex';
+            } else {
+                document.getElementById('customRange').style.display = 'none';
+                updateChart(range);
+            }
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            const range = document.getElementById('timeRange').value;
+            if (range !== 'custom') {
+                updateChart(range);
+            }
+        });
+
+        document.getElementById('forecastBtn').addEventListener('click', function() {
+            // In a real app, this would call your API to trigger a new forecast
+            alert('New forecast requested! This would call your Spark backend in a real application.');
+        });
+
+        // Initialize with 7-day data
+        updateChart('7d');
+    </script>
+</body>
+</html>
